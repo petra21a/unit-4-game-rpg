@@ -56,24 +56,28 @@ let swRPGame = {
             startText.addClass("font-italic text-dark text-center")
             startText.text("Destiny Awaits: may the force be with you...")
             $("#starting-lineup").append(startText);
+            
             this.buildCharacters();
         },
+
         clearGame: function(){
             $("#starting-lineup")
             .empty();
             $("#arena-attack")
             .empty();
-            $("opponent")
+            $("#arena-defend")
             .empty();
-            $("#arena-attack")
+            $("#attacker-area")
             .empty();
-            $("#arena-attack")
+            $("#defender-area")
+            .empty();
+            $("#footer")
             .empty();
         },
 
     },
     buildCards: function(){
-        swRPGame.clearGame;
+        
     //make Cards for characters
     for (const n of this.characters){
         let card = $("<div>");
@@ -135,7 +139,6 @@ let swRPGame = {
             $(".button-attack[name="+n.name+"]").hide();
             $(".button-start[name="+n.name+"]").show();
             $(".button-enemy[name="+n.name+"]").hide();
-            console.log($(".button-attack,[name="+n.name+"]"));
             break;
             
             case("attack"):
@@ -145,7 +148,7 @@ let swRPGame = {
             $(".button-start[name="+n.name+"]").hide();
             $(".button-enemy[name="+n.name+"]").hide();
         
-            console.log("attack: "+ card.attr("name") +" "+ card.attr("status"));
+        
             break;
 
             case("opponent"):
@@ -155,7 +158,7 @@ let swRPGame = {
             $(".button-attack[name="+n.name+"]").hide();
             $(".button-start[name="+n.name+"]").hide();
             $(".button-enemy[name="+n.name+"]").show();
-            console.log("opponent: "+ card.attr("name") +" "+ card.attr("status"));
+            
             break;
 
             case("enemy"):
@@ -164,7 +167,7 @@ let swRPGame = {
             $(".button-attack[name="+n.name+"]").hide();
             $(".button-start[name="+n.name+"]").hide();
             $(".button-enemy[name="+n.name+"]").hide();
-            console.log("enemy: "+ card.attr("name") +" "+ card.attr("status"));
+            
             break;
             
             case("dead"):
@@ -174,19 +177,54 @@ let swRPGame = {
             $(".button-attack[name="+n.name+"]").hide();
             $(".button-start[name="+n.name+"]").hide();
             $(".button-enemy[name="+n.name+"]").hide();
-            console.log("dead: "+ card.attr("name") +" "+ card.attr("status"));
+            card.addClass("border-danger");
+            $("h4[name="+n.name+"]").prepend("DEFEATED <br>");
+            $("h4[name="+n.name+"]").addClass("text-danger");
+            break;
+
+            case("loser"):
+            appendTo("#footer");
+            $(".button-attack[name="+n.name+"]").hide();
+            $(".button-start[name="+n.name+"]").hide();
+            $(".button-enemy[name="+n.name+"]").hide();
+            card.addClass("border-danger");
+            $("h4[name="+n.name+"]").text("LOSER");
+            $("h4[name="+n.name+"]").addClass("text-danger");
+            $("#footer").append($("<a>")
+            .addClass("btn btn-danger float-right height-auto width-auto align-self-center text-dark button-restart")
+            .attr("href","#")
+            .attr("name", n.name)
+            .text("There is no try, only do - Replay?"))
+            break;
+
+            case("victor"):
+            appendTo("#starting-lineup");
+            $(".button-attack[name="+n.name+"]").hide();
+            $(".button-start[name="+n.name+"]").hide();
+            $(".button-enemy[name="+n.name+"]").hide();
+            card.addClass("border-success img-fluid m-2 width-auto height-auto");
+            $("h4[name="+n.name+"]").text("VICTORY");
+            $("h4[name="+n.name+"]").addClass("text-success");
+            $("#starting-lineup").append($("<a>")
+            .addClass("btn btn-success float-right height-auto width-auto align-self-center text-light button-restart")
+            .attr("href","#")
+            .attr("name", n.name)
+            .text("The force is strong with this one - Replay?"))
+        
+          
             break;
         
         }
     };
-    }    
-    }
-console.log(swRPGame.characters)
-    swRPGame.gameSetup.startGame();
-    swRPGame.buildCards();
-
+},
+playGame: function(){
+    let attack = 6;
+    let counterAttack = 0;
+    let defeated =0;
+    console.log(defeated)
     $(".button-start").on("click",function(){
         let player = $(this).attr("name")
+        swRPGame.gameSetup.clearGame();
         for(const n of swRPGame.characters){
             if(player===n.name){
                 n.status="attack";
@@ -194,22 +232,76 @@ console.log(swRPGame.characters)
                 n.status="opponent";
             }
         }
-        swRPGame.gameSetup.clearGame();
+        
         swRPGame.buildCards();
-     
-      
-          
-        
     });
-     
+    
+    $(".container").on("click",".button-enemy",function(){
+        let enemy = $(this).attr("name")
+        swRPGame.gameSetup.clearGame();
+        for(const n of swRPGame.characters){
+            if(enemy===n.name){
+                n.status="enemy";
+            }
+        }
+        swRPGame.buildCards();
+    });
+    
+    $(".container").on("click",".button-attack",function(){
+        // let player = $(this).attr("name")
+        swRPGame.gameSetup.clearGame();
+        console.log(attack +"-" +counterAttack)
         
-        //Player picks a Character
-        // $(".select-button").on("click",function(){
-        // let selected =$(this).attr()
-        // })
+        for(const n of swRPGame.characters){
+            if(n.status==="enemy"){
+                n.hp-=attack;
+                attack+=6;
+                counterAttack=n.defend;
+                
+                if(n.hp<0){
+                    n.status="dead";
+                    counterAttack=0;
+                    defeated++;
+                
+                }
+            }
+        }
 
-
-
+        for(const n of swRPGame.characters){
+            
+            if(n.status==="attack"){
+                n.hp-=counterAttack;
+                if(n.hp<0){
+                    swRPGame.gameSetup.clearGame();
+                    n.status="loser" ;
+                }
+                
+                if(defeated===3){
+                    swRPGame.gameSetup.clearGame();
+                    n.status="victor";
+                }
+            }
+        }
+        swRPGame.buildCards();
+    });
+    $(".container").on("click",".button-restart",function(){
+        attack = 6;
+        counterAttack = 0;
+        defeated =0;
+        swRPGame.characters = [];
+        swRPGame.gameSetup.clearGame();
+        swRPGame.gameSetup.startGame();
+        swRPGame.buildCards();
+        swRPGame.playGame();
+        console.log(attack +"-" +counterAttack+" - "+defeated)
+    });
+}    
+}
+swRPGame.gameSetup.startGame();
+swRPGame.buildCards();
+swRPGame.playGame();
+             
+                            
 
 })
 
